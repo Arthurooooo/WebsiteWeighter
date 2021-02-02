@@ -14,7 +14,7 @@
 
 
     <!-- Bootstrap core CSS -->
-<link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="./assets/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
       .bd-placeholder-img {
@@ -184,9 +184,19 @@ function weightlink($link)
 
 /////////////////////////////////////////////////////////////////
 
+$index = [$_POST['sitemap'], "oui"];
+$array = array(
+  "foo" => $_POST['sitemap'],
+  "bar" => "foo",
+);
+if(preg_match('/.*sitemap.xml/', $_POST['sitemap']) == 0)
+{
+  echo("not a sitemap");
+  exit;
+}
+
 
 $mainsitemaplist = array_values(array_filter(explode(" ", simplexml_load_file($_POST['sitemap'])->asXML()), "myFilter")) or die("can't load main sitemap");
-#print_r ($mainsitemaplist);
 
 $i = 0;
 foreach ($mainsitemaplist as $sitemap) {
@@ -203,35 +213,33 @@ foreach ($mainsitemaplist as $sitemap) {
 
 }
 
-    $result = "non defini ";
-    if(isset($_POST['site']))
-    {
-      $site = $_POST['site'];
-      $var = shell_exec('/usr/local/bin/wget -O- "'.$_POST['site'].'" | wc -c');
+$result = "non defini ";
+if(isset($_POST['site']))
+{
+  $site = $_POST['site'];
+  $var = shell_exec('/usr/local/bin/wget -O- "'.$_POST['site'].'" | wc -c');
 
-      $result = intval($var) * 0.00000006012;
-      //print(exec('wget -O- "greenmetrics.io"'))
-    }
-    #$sitemap = $_POST['sitemap'];
+  $result = intval($var) * 0.00000006012;
+  print(exec('wget -O- "greenmetrics.io"'));
+}
 
-    $html = file_get_contents($_POST['site']);
+$html = file_get_contents($_POST['site']);
 
-    //if(strtok($xml, "\n"))
-    $xml = new SimpleXMLElement(simplexml_load_file($_POST['sitemap'])->asXML()) or die("Error: Cannot load xml");
-    $sitemapslist = $xml;
+$xml = new SimpleXMLElement(simplexml_load_file($_POST['sitemap'])->asXML()) or die("Error: Cannot load xml");
+$sitemapslist = $xml;
 
 
-    // echo "<pre>";
-    // foreach($xmlnodes as $xmlkey => $xmlnode) {
-    //   //echo($xmlnode->nodeValue);
-    //   $xmlurl = $xmlnode->getAttribute('loc');
-    //   echo($xmlurl);
-    //   $xmltmp = shell_exec('/usr/local/bin/wget -O- "'. $xmlurl .'" | wc -c');
-    //   echo $xmlkey . " => " . $xmlurl . "<br/>" . intval($xmltmp) * 0.00000006012 . "<br/><br/>";
-    //   $xmltotalweight = $xmltotalweight + (intval($xmltmp) * 0.00000006012);
-    //   echo "poids total XML = " . $xmltotalweight . "g" . "<br/>";
-    // }
-    // echo "</pre>";
+// echo "<pre>";
+// foreach($xmlnodes as $xmlkey => $xmlnode) {
+//   //echo($xmlnode->nodeValue);
+//   $xmlurl = $xmlnode->getAttribute('loc');
+//   echo($xmlurl);
+//   $xmltmp = shell_exec('/usr/local/bin/wget -O- "'. $xmlurl .'" | wc -c');
+//   echo $xmlkey . " => " . $xmlurl . "<br/>" . intval($xmltmp) * 0.00000006012 . "<br/><br/>";
+//   $xmltotalweight = $xmltotalweight + (intval($xmltmp) * 0.00000006012);
+//   echo "poids total XML = " . $xmltotalweight . "g" . "<br/>";
+// }
+// echo "</pre>";
 
 
   ?>
@@ -244,7 +252,7 @@ foreach ($mainsitemaplist as $sitemap) {
 </main><!-- /.container -->
 
 
-    <script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./assets/dist/js/bootstrap.bundle.min.js"></script>
 
   </body>
 </html>
