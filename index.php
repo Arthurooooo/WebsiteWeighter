@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.79.0">
-    <title>Starter Template · Bootstrap v5.0</title>
+    <title>Website Weighter by GM</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/starter-template/">
 
@@ -40,35 +40,11 @@
 
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">Navbar</a>
+    <a class="navbar-brand" href="#">Greenmetrics</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-      <ul class="navbar-nav me-auto mb-2 mb-md-0">
-        <li class="nav-item active">
-          <a class="nav-link" aria-current="page" href="#">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Link</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</a>
-          <ul class="dropdown-menu" aria-labelledby="dropdown01">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
-          </ul>
-        </li>
-      </ul>
-      <form class="d-flex">
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-        <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
     </div>
   </div>
 </nav>
@@ -82,9 +58,8 @@
 
   <div>
   <form method="post">
-
-    <input type="text" name="site" />
-    <input type="text" name="sitemap" />
+    <input type="text" name="site" placeholder="Website URL"/>
+    <input type="text" name="sitemap" placeholder="Website sitemap"/>
     <input type="submit"/>
   </form>
 
@@ -112,7 +87,41 @@ function endsWith( $haystack, $needle) {
   return ($var !== NULL && $var !== FALSE && $var !== "" && $var !== " ");
 }
 
-function weightlink($link)
+function weightlink($url)
+{
+  $tmp = shell_exec('/usr/local/bin/wget -O- "'. $url .'" | wc -c'); //mesure tout les liens
+  //echo $url . "<br/>" . intval($tmp) * 0.00000006012 . "<br/><br/>";
+  $weight = (intval($tmp) * 0.00000006012);
+  return ($weight);
+}
+
+function measure_sitemap($nodes)
+{
+  $totalweight = 0;
+
+  echo "<pre>";
+  foreach($nodes as $key => $node)
+  {
+    try
+    {
+      $url = $node->getAttribute('href'); //recup tout les liens html de la page
+    }
+    catch(Exception $e)
+    {
+      $url = $node->getAttribute('loc'); //recup tout les liens html de la page
+    }
+    //echo $url . '<br/>';
+    if(strpos($url, $url) !== false)
+    {
+      $tmp = shell_exec('/usr/local/bin/wget -O- "'. $url .'" | wc -c'); //mesure tout les liens
+      echo $key . " => " . $url . "<br/>" . intval($tmp) * 0.00000006012 . "<br/>";
+      $totalweight = ($totalweight + (intval($tmp) * 0.00000006012));
+      echo "poids total = " . $totalweight . "g" . "<br/><br/>";
+    }
+  }
+}
+
+function parse($link)
   {
 
     echo "bien recu " . $link . '<br/>';
@@ -139,42 +148,17 @@ function weightlink($link)
         $nodes = $xpath->query('//loc');
         echo "fail";
       }
+      measure_sitemap($nodes);
     }
     else if(substr($link, -3) == "tml")
     {
-      $doc->loadHTML($link); //helps if html is well formed and has proper use of html entities!
-      echo("issa html");
-
-
-    $xpath = new DOMXpath($doc);
-
-    $nodes = $xpath->query('//a');
+      //echo("issa html");
+      weightlink($link);
+      die();
     }
     else{
+      print($link);
       die("invalid sitemap");
-    }
-
-    $totalweight = 0;
-
-    echo "<pre>";
-    foreach($nodes as $key => $node)
-    {
-      try
-      {
-        $url = $node->getAttribute('href'); //recup tout les liens html de la page
-      }
-      catch(Exception $e)
-      {
-        $url = $node->getAttribute('loc'); //recup tout les liens html de la page
-      }
-      echo $url . '<br/>';
-      if(strpos($url, $url) !== false)
-      {
-        $tmp = shell_exec('/usr/local/bin/wget -O- "'. $url .'" | wc -c'); //mesure tout les liens
-        echo $key . " => " . $url . "<br/>" . intval($tmp) * 0.00000006012 . "<br/><br/>";
-        $totalweight = ($totalweight + (intval($tmp) * 0.00000006012));
-        echo "poids total = " . $totalweight . "g" . "<br/>";
-      }
     }
     echo "</pre>";
   }
@@ -184,68 +168,65 @@ function weightlink($link)
 
 /////////////////////////////////////////////////////////////////
 
-$index = [$_POST['sitemap'], "oui"];
-$array = array(
-  "foo" => $_POST['sitemap'],
-  "bar" => "foo",
-);
-if(preg_match('/.*sitemap.xml/', $_POST['sitemap']) == 0)
-{
-  echo("not a sitemap");
-  exit;
-}
-
-
-$mainsitemaplist = array_values(array_filter(explode(" ", simplexml_load_file($_POST['sitemap'])->asXML()), "myFilter")) or die("can't load main sitemap");
-
-$i = 0;
-foreach ($mainsitemaplist as $sitemap) {
-
-  $sitemap = trim(strip_tags($sitemap));
-  if(substr($sitemap, 0, 1) == "h")
+if (isset($_POST["sitemap"]) && !empty($_POST["sitemap"])): // Traitement de la sitemap
+  if (strpos($_POST['sitemap'], "sitemap.xml") != FALSE)
   {
-    weightlink($sitemap);
+    echo "Handling your sitemap ... Wait a minute and be patient <3" . "<br/>" . "<br/>";
+
+
+    $mainsitemaplist = array_values(array_filter(explode(" ", simplexml_load_file($_POST['sitemap'])->asXML()), "myFilter")) or die("can't load main sitemap");
+
+    //var_dump($mainsitemaplist);
+
+    $i = 0;
+    foreach ($mainsitemaplist as $sitemap)
+    {
+      $sitemap = trim(strip_tags($sitemap));
+      if(substr($sitemap, 0, 1) == "h")
+      {
+        parse($sitemap);
+      }
+
+      echo('<br/>');
+      $i++;
+
+
+    }
+    
+    $result = "non defini ";
+    
+    $html = file_get_contents($_POST['site']);
+    
+    $xml = new SimpleXMLElement(simplexml_load_file($_POST['sitemap'])->asXML()) or die("Error: Cannot load xml");
+    $sitemapslist = $xml;
+    die();
   }
+  else
+  {
+    echo "This is not a sitemap...";
+    die();
+  }
+//else: // Traitement de l'url
+  //parse($_POST["site"]);
+endif;
 
-  echo('<br/>');
-  $i++;
-
-
-}
-
-$result = "non defini ";
-if(isset($_POST['site']))
+if(isset($_POST['site']) && !empty($_POST["site"]))
 {
   $site = $_POST['site'];
-  $var = shell_exec('/usr/local/bin/wget -O- "'.$_POST['site'].'" | wc -c');
-
-  $result = intval($var) * 0.00000006012;
-  print(exec('wget -O- "greenmetrics.io"'));
+  if ($ret = parse_url($site))
+  {
+    if (!isset($ret["scheme"]))
+     {
+        $site = "http://{$site}";
+     }
+  }
+  $weight = weightlink($site);
+  echo "<br/>" . "Cette page pese = " . $weight . "g de CO2" . "<br/>";
+  //print(exec('wget -O- "greenmetrics.io"'));
 }
-
-$html = file_get_contents($_POST['site']);
-
-$xml = new SimpleXMLElement(simplexml_load_file($_POST['sitemap'])->asXML()) or die("Error: Cannot load xml");
-$sitemapslist = $xml;
-
-
-// echo "<pre>";
-// foreach($xmlnodes as $xmlkey => $xmlnode) {
-//   //echo($xmlnode->nodeValue);
-//   $xmlurl = $xmlnode->getAttribute('loc');
-//   echo($xmlurl);
-//   $xmltmp = shell_exec('/usr/local/bin/wget -O- "'. $xmlurl .'" | wc -c');
-//   echo $xmlkey . " => " . $xmlurl . "<br/>" . intval($xmltmp) * 0.00000006012 . "<br/><br/>";
-//   $xmltotalweight = $xmltotalweight + (intval($xmltmp) * 0.00000006012);
-//   echo "poids total XML = " . $xmltotalweight . "g" . "<br/>";
-// }
-// echo "</pre>";
 
 
   ?>
-  <pre>sitemap =  <?=$xmlurl;?></pre>
-
-   <pre>Cette page pese <?=$result;?>g de co2</pre>
 
   </div>
 
